@@ -26,12 +26,16 @@ def configure_cuda():
     log("Compiling for CUDA.")
     compiler_args = {"cxx": ["-O3", "-DFUSED_SSIM_CUDA"], "nvcc": ["-O3", "-DFUSED_SSIM_CUDA"]}
 
+    if sys.platform == "win32":
+        compiler_args["cxx"].extend(["/std:c++20", "/Zc:preprocessor", "-DWIN32_LEAN_AND_MEAN"])
+        compiler_args["nvcc"].extend(["-std=c++20", "-Xcompiler", "/Zc:preprocessor", "-DWIN32_LEAN_AND_MEAN"])
+
     if torch.version.hip:
         log("Detected AMD GPU with ROCm/HIP")
         compiler_args["nvcc"].append("-ffast-math")
         detected_arch = "AMD GPU (ROCm/HIP)"
     else:
-        compiler_args["nvcc"].extend(("--maxrregcount=32", "--use_fast_math"))
+        compiler_args["nvcc"].extend(("--maxrregcount=32", "--use_fast_math", "--allow-unsupported-compiler"))
 
         # Check for CUDA_ARCHITECTURES environment variable first
         cuda_archs_env = os.environ.get('CUDA_ARCHITECTURES')
